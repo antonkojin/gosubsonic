@@ -242,9 +242,10 @@ func (s Client) GetIndexes(folderID int64, modified int64) ([]Index, error) {
 			}
 
 			// Create a IndexArtist from map
+			id, _ := strconv.ParseInt(ma["id"].(string), 0, 64)
 			a := IndexArtist{
 				// Note: ID is always an int64, so we can safely convert the float64
-				ID:   int64(ma["id"].(float64)),
+				ID:   id,
 				Name: name,
 			}
 
@@ -333,16 +334,18 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 
 			// Is this a directory?
 			if b, ok := m["isDir"].(bool); b && ok {
+				id, _ := strconv.ParseInt(m["id"].(string), 0, 64)
+				parentId, _ := strconv.ParseInt(m["parent"].(string), 0, 64)
 				// Create a directory from the map
 				d := Directory{
 					// Note: ID is always an int64, so we can safely convert the float64
-					ID:         int64(m["id"].(float64)),
+					ID:         id,
 					Album:      album,
 					Artist:     artist,
 					CoverArt:   coverArt,
 					Created:    created,
 					CreatedRaw: m["created"].(string),
-					Parent:     int64(m["parent"].(float64)),
+					Parent:     parentId,
 					Title:      title,
 				}
 
