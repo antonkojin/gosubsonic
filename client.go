@@ -355,8 +355,8 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 				// If not a directory, this is a media item
 				// Parse shared media field items
 				var id int64
-				if i, ok := m["id"].(float64); ok {
-					id = int64(i)
+				if i, err := strconv.ParseInt(m["id"].(string), 0, 64); err==nil {
+					id = i;
 				}
 
 				var bitRate int64
@@ -386,8 +386,8 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 				}
 
 				var parent int64
-				if p, ok := m["parent"].(float64); ok {
-					parent = int64(p)
+				if p, err := strconv.ParseInt(m["parent"].(string), 0, 64); err==nil {
+					parent = p
 				}
 
 				var path string
