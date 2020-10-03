@@ -60,7 +60,7 @@ type apiMusicFolderContainer struct {
 
 // MusicFolder represents a top-level music folders of Subsonic
 type MusicFolder struct {
-	ID   int64
+	ID   string
 	Name string
 }
 
@@ -81,7 +81,7 @@ type Index struct {
 
 // IndexArtist represents an artist in the Subsonic index
 type IndexArtist struct {
-	ID   int64
+	ID   string
 	Name string
 }
 
@@ -100,12 +100,12 @@ type Content struct {
 // Directory represents a media directory from Subsonic
 type Directory struct {
 	// Raw values
-	ID         int64
+	ID         string
 	Album      string
 	Artist     string
 	CoverArt   int64
 	CreatedRaw string `json:"created"`
-	Parent     int64
+	Parent     string
 	Title      string
 
 	// Parsed values
@@ -115,7 +115,7 @@ type Directory struct {
 // Audio represents an audio item from Subsonic
 type Audio struct {
 	// Raw values
-	ID                    int64
+	ID                    string
 	Album                 string
 	AlbumID               int64
 	Artist                string
@@ -127,7 +127,7 @@ type Audio struct {
 	DiscNumber            int64
 	DurationRaw           int64 `json:"duration"`
 	Genre                 string
-	Parent                int64
+	Parent                string
 	Path                  string
 	Size                  int64
 	Suffix                string
@@ -146,13 +146,13 @@ type Audio struct {
 // Video represents a video item from Subsonic
 type Video struct {
 	// Raw values
-	ID                    int64
+	ID                    string
 	BitRate               int64
 	ContentType           string
 	CoverArt              int64
 	CreatedRaw            string `json:"created"`
 	DurationRaw           int64  `json:"duration"`
-	Parent                int64
+	Parent                string
 	Path                  string
 	Size                  int64
 	Suffix                string
@@ -173,11 +173,11 @@ type apiNowPlayingContainer struct {
 // NowPlaying represents a now playing entry from Subsonic
 type NowPlaying struct {
 	// Raw values
-	ID          int64
+	ID          string
 	Album       string
-	AlbumID     int64
+	AlbumID     string
 	Artist      string
-	ArtistID    int64
+	ArtistID    string
 	BitRate     int64
 	ContentType string
 	CoverArt    int64
@@ -188,7 +188,7 @@ type NowPlaying struct {
 	IsDir       bool
 	IsVideo     bool
 	MinutesAgo  int64
-	Parent      int64
+	Parent      string
 	Path        string
 	PlayerID    int64
 	Size        int64

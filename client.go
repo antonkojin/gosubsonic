@@ -16,7 +16,7 @@ import (
 // Constants to pass with each API request
 const (
 	CLIENT     = "gosubsonic-git-master"
-	APIVERSION = "1.8.0"
+	APIVERSION = "1.15.0"
 )
 
 // dataSource represents a data source for a Subsonic client (could be HTTP, mock, etc)
@@ -141,7 +141,7 @@ func (s Client) GetMusicFolders() ([]MusicFolder, error) {
 			// Create a music folder from the map
 			f := MusicFolder{
 				// Note: ID is always an int64, so we can safely convert the float64
-				ID:   int64(m["id"].(float64)),
+				ID:   strconv.FormatInt(int64(m["id"].(float64)), 10),
 				Name: m["name"].(string),
 			}
 
@@ -155,18 +155,18 @@ func (s Client) GetMusicFolders() ([]MusicFolder, error) {
 }
 
 // GetIndexes returns an indexed structure of all artists from Subsonic
-func (s Client) GetIndexes(folderID int64, modified int64) ([]Index, error) {
+func (s Client) GetIndexes(folderID string, modified string) ([]Index, error) {
 	// Additional parameters for query
 	query := ""
 
 	// Check for a set folder ID (ID >= 0)
-	if folderID >= 0 {
-		query = query + "&musicFolderId=" + strconv.FormatInt(folderID, 10)
+	if len(folderID) > 0 {
+		query = query + "&musicFolderId=" + folderID
 	}
 
 	// Check for a modify time (modified >= 0)
-	if modified >= 0 {
-		query = query + "&ifModifiedSince=" + strconv.FormatInt(modified, 10)
+	if len(modified) > 0 {
+		query = query + "&ifModifiedSince=" + modified
 	}
 
 	// Retrieve indexes from Subsonic, with query parameters
@@ -204,7 +204,7 @@ func (s Client) GetIndexes(folderID int64, modified int64) ([]Index, error) {
 
 		// Create an index
 		index := Index{
-			Name: m["name"].(string),
+			Name:      m["name"].(string),
 			ArtistRaw: m["artist"],
 		}
 
@@ -242,7 +242,7 @@ func (s Client) GetIndexes(folderID int64, modified int64) ([]Index, error) {
 			}
 
 			// Create a IndexArtist from map
-			id, _ := strconv.ParseInt(ma["id"].(string), 0, 64)
+			id, _ := ma["id"].(string)
 			a := IndexArtist{
 				// Note: ID is always an int64, so we can safely convert the float64
 				ID:   id,
@@ -264,9 +264,9 @@ func (s Client) GetIndexes(folderID int64, modified int64) ([]Index, error) {
 }
 
 // GetMusicDirectory returns a list of all content in a music directory
-func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
+func (s Client) GetMusicDirectory(folderID string) (*Content, error) {
 	// Retrieve a list of files in a given directory from Subsonic
-	res, err := s.source.Get(s.makeURL("getMusicDirectory") + "&id=" + strconv.FormatInt(folderID, 10))
+	res, err := s.source.Get(s.makeURL("getMusicDirectory") + "&id=" + folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -327,15 +327,15 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 			}
 
 			// Parse CreatedRaw into a time.Time struct
-			created, err := time.Parse("2006-01-02T15:04:05Z", m["created"].(string))
+			created, err := time.Parse(time.RFC3339Nano, m["created"].(string))
 			if err != nil {
 				return nil, err
 			}
 
 			// Is this a directory?
 			if b, ok := m["isDir"].(bool); b && ok {
-				id, _ := strconv.ParseInt(m["id"].(string), 0, 64)
-				parentId, _ := strconv.ParseInt(m["parent"].(string), 0, 64)
+				id, _ := m["id"].(string)
+				parentId, _ := m["parent"].(string)
 				// Create a directory from the map
 				d := Directory{
 					// Note: ID is always an int64, so we can safely convert the float64
@@ -354,10 +354,8 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 			} else {
 				// If not a directory, this is a media item
 				// Parse shared media field items
-				var id int64
-				if i, err := strconv.ParseInt(m["id"].(string), 0, 64); err==nil {
-					id = i;
-				}
+				var id string
+				id = m["id"].(string)
 
 				var bitRate int64
 				if b, ok := m["bitRate"].(float64); ok {
@@ -385,10 +383,8 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 					return nil, err
 				}
 
-				var parent int64
-				if p, err := strconv.ParseInt(m["parent"].(string), 0, 64); err==nil {
-					parent = p
-				}
+				var parent string
+				parent = m["parent"].(string)
 
 				var path string
 				if p, ok := m["path"].(string); ok {
@@ -424,19 +420,19 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 				// Check if this item is a video
 				if b, ok := m["isVideo"].(bool); b && ok {
 					med := Video{
-						ID:          id,
-						BitRate:     bitRate,
-						ContentType: contentType,
-						CoverArt:    coverArt,
-						Created:     created,
-						CreatedRaw:  createdRaw,
-						Duration:    duration,
-						DurationRaw: durationRaw,
-						Parent:      parent,
-						Path:        path,
-						Size:        size,
-						Suffix:      suffix,
-						Title:       title,
+						ID:                    id,
+						BitRate:               bitRate,
+						ContentType:           contentType,
+						CoverArt:              coverArt,
+						Created:               created,
+						CreatedRaw:            createdRaw,
+						Duration:              duration,
+						DurationRaw:           durationRaw,
+						Parent:                parent,
+						Path:                  path,
+						Size:                  size,
+						Suffix:                suffix,
+						Title:                 title,
 						TranscodedContentType: transcodedContentType,
 						TranscodedSuffix:      transcodedSuffix,
 					}
@@ -447,22 +443,22 @@ func (s Client) GetMusicDirectory(folderID int64) (*Content, error) {
 					// Else, this is an audio item
 					med := Audio{
 						// Note: ID is always an int64, so we can safely convert the float64
-						ID:          id,
-						Album:       album,
-						Artist:      artist,
-						BitRate:     bitRate,
-						ContentType: contentType,
-						CoverArt:    coverArt,
-						Created:     created,
-						CreatedRaw:  createdRaw,
-						Duration:    duration,
-						DurationRaw: durationRaw,
-						Parent:      parent,
-						Path:        path,
-						Size:        size,
-						Suffix:      suffix,
-						Title:       title,
-						Type:        mType,
+						ID:                    id,
+						Album:                 album,
+						Artist:                artist,
+						BitRate:               bitRate,
+						ContentType:           contentType,
+						CoverArt:              coverArt,
+						Created:               created,
+						CreatedRaw:            createdRaw,
+						Duration:              duration,
+						DurationRaw:           durationRaw,
+						Parent:                parent,
+						Path:                  path,
+						Size:                  size,
+						Suffix:                suffix,
+						Title:                 title,
+						Type:                  mType,
 						TranscodedContentType: transcodedContentType,
 						TranscodedSuffix:      transcodedSuffix,
 					}
@@ -561,25 +557,13 @@ func (s Client) GetNowPlaying() ([]NowPlaying, error) {
 			}
 
 			// MusicID
-			_musicID, err := strconv.Atoi(m["id"].(string))
-			if err != nil {
-				return nil, err
-			}
-			musicID := int64(_musicID)
+			musicID := m["id"].(string)
 
 			// AlbumID
-			_albumID, err := strconv.Atoi(m["albumId"].(string))
-			if err != nil {
-				return nil, err
-			}
-			albumID := int64(_albumID)
+			albumID := m["albumId"].(string)
 
 			// Parent
-			_parent, err := strconv.Atoi(m["parent"].(string))
-			if err != nil {
-				return nil, err
-			}
-			parent := int64(_parent)
+			parent := m["parent"].(string)
 
 			// Create a now playing entry from the map
 			n := NowPlaying{
@@ -645,10 +629,10 @@ type StreamOptions struct {
 }
 
 // Stream returns a io.ReadCloser which contains a processed media file stream, with an optional StreamOptions struct
-func (s Client) Stream(id int64, options *StreamOptions) (io.ReadCloser, error) {
+func (s Client) Stream(id string, options *StreamOptions) (io.ReadCloser, error) {
 	// Check for no options, which will do a simple stream
 	if options == nil {
-		return fetchBinary(s.makeURL("stream") + "&id=" + strconv.FormatInt(id, 10))
+		return fetchBinary(s.makeURL("stream") + "&id=" + id)
 	}
 
 	// Check for additional options
@@ -680,7 +664,7 @@ func (s Client) Stream(id int64, options *StreamOptions) (io.ReadCloser, error) 
 	}
 
 	// Stream with options
-	return fetchBinary(s.makeURL("stream") + "&id=" + strconv.FormatInt(id, 10) + optStr)
+	return fetchBinary(s.makeURL("stream") + "&id=" + id + optStr)
 }
 
 // Download returns a io.ReadCloser which contains a raw, non-transcoded media file stream
